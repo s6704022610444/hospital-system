@@ -18,53 +18,42 @@ DECLARE
   v_order_id UUID;
   v_user_id UUID;
 BEGIN
-  -- Synthetic auth accounts for local development. If Auth user IDs are not present, skip role seeding safely.
-  FOR i IN 1..10 LOOP
-    SELECT id INTO v_user_id
-    FROM auth.users
-    WHERE email = 'demo.' || CASE i
-      WHEN 1 THEN 'registrar'
-      WHEN 2 THEN 'nurse'
-      WHEN 3 THEN 'doctor'
-      WHEN 4 THEN 'med_tech'
-      WHEN 5 THEN 'nuclear_med'
-      WHEN 6 THEN 'cashier'
-      WHEN 7 THEN 'pharmacist'
-      WHEN 8 THEN 'warehouse'
-      WHEN 9 THEN 'admin'
-      ELSE 'director'
-    END || '@hospital.local'
-    LIMIT 1;
+  -- Seed synthetic demo auth accounts with password 'Password123!'
+  FOR v_user_id, v_hn, v_vn IN
+    SELECT * FROM (VALUES
+      ('00000000-0000-0000-0000-000000000001'::uuid, 'registrar@hospital.local', 'registrar'::text),
+      ('00000000-0000-0000-0000-000000000002'::uuid, 'nurse@hospital.local', 'nurse'::text),
+      ('00000000-0000-0000-0000-000000000003'::uuid, 'doctor@hospital.local', 'doctor'::text),
+      ('00000000-0000-0000-0000-000000000004'::uuid, 'medtech@hospital.local', 'med_tech'::text),
+      ('00000000-0000-0000-0000-000000000005'::uuid, 'nuclearmed@hospital.local', 'nuclear_med'::text),
+      ('00000000-0000-0000-0000-000000000006'::uuid, 'cashier@hospital.local', 'cashier'::text),
+      ('00000000-0000-0000-0000-000000000007'::uuid, 'pharmacist@hospital.local', 'pharmacist'::text),
+      ('00000000-0000-0000-0000-000000000008'::uuid, 'warehouse@hospital.local', 'warehouse'::text),
+      ('00000000-0000-0000-0000-000000000009'::uuid, 'admin@hospital.local', 'admin'::text),
+      ('00000000-0000-0000-0000-000000000010'::uuid, 'director@hospital.local', 'director'::text),
+      ('00000000-0000-0000-0000-000000000011'::uuid, 'dr.somchai@hospital.local', 'doctor'::text)
+    ) AS t(id, email, primary_role)
+  LOOP
+    INSERT INTO auth.users (
+      id, instance_id, email, encrypted_password, email_confirmed_at,
+      raw_app_meta_data, raw_user_meta_data, created_at, updated_at, aud, role
+    ) VALUES (
+      v_user_id, '00000000-0000-0000-0000-000000000000', v_hn, crypt('Password123!', gen_salt('bf')), now(),
+      jsonb_build_object('provider', 'email', 'providers', jsonb_build_array('email')),
+      jsonb_build_object('full_name', 'Demo ' || v_vn), now(), now(), 'authenticated', 'authenticated'
+    ) ON CONFLICT (id) DO UPDATE SET encrypted_password = crypt('Password123!', gen_salt('bf'));
 
-    IF v_user_id IS NOT NULL THEN
-      INSERT INTO public.user_profiles (id, full_name, current_active_role)
-      VALUES (v_user_id, 'Demo ' || i, CASE i
-        WHEN 1 THEN 'registrar'::hospital_role
-        WHEN 2 THEN 'nurse'::hospital_role
-        WHEN 3 THEN 'doctor'::hospital_role
-        WHEN 4 THEN 'med_tech'::hospital_role
-        WHEN 5 THEN 'nuclear_med'::hospital_role
-        WHEN 6 THEN 'cashier'::hospital_role
-        WHEN 7 THEN 'pharmacist'::hospital_role
-        WHEN 8 THEN 'warehouse'::hospital_role
-        WHEN 9 THEN 'admin'::hospital_role
-        ELSE 'director'::hospital_role
-      END)
-      ON CONFLICT (id) DO NOTHING;
+    INSERT INTO public.user_profiles (id, full_name, current_active_role)
+    VALUES (v_user_id, 'Demo ' || v_vn, v_vn::hospital_role)
+    ON CONFLICT (id) DO UPDATE SET current_active_role = v_vn::hospital_role;
 
+    INSERT INTO public.user_roles (user_id, role, is_default)
+    VALUES (v_user_id, v_vn::hospital_role, true)
+    ON CONFLICT (user_id, role) DO NOTHING;
+
+    IF v_hn = 'dr.somchai@hospital.local' THEN
       INSERT INTO public.user_roles (user_id, role, is_default)
-      VALUES (v_user_id, CASE i
-        WHEN 1 THEN 'registrar'::hospital_role
-        WHEN 2 THEN 'nurse'::hospital_role
-        WHEN 3 THEN 'doctor'::hospital_role
-        WHEN 4 THEN 'med_tech'::hospital_role
-        WHEN 5 THEN 'nuclear_med'::hospital_role
-        WHEN 6 THEN 'cashier'::hospital_role
-        WHEN 7 THEN 'pharmacist'::hospital_role
-        WHEN 8 THEN 'warehouse'::hospital_role
-        WHEN 9 THEN 'admin'::hospital_role
-        ELSE 'director'::hospital_role
-      END, true)
+      VALUES (v_user_id, 'director'::hospital_role, false)
       ON CONFLICT (user_id, role) DO NOTHING;
     END IF;
   END LOOP;

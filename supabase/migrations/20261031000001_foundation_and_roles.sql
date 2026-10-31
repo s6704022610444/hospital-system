@@ -93,6 +93,16 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+-- Grant required permissions to supabase_auth_admin role for Auth Hook execution
+DO $$ BEGIN
+  GRANT USAGE ON SCHEMA public TO supabase_auth_admin;
+  GRANT EXECUTE ON FUNCTION public.custom_access_token_hook TO supabase_auth_admin;
+  REVOKE EXECUTE ON FUNCTION public.custom_access_token_hook FROM authenticated, anon, public;
+  GRANT SELECT ON TABLE public.user_roles TO supabase_auth_admin;
+  GRANT SELECT ON TABLE public.user_profiles TO supabase_auth_admin;
+EXCEPTION WHEN undefined_object THEN null;
+END $$;
+
 -- RPC for switching active role safely
 CREATE OR REPLACE FUNCTION public.switch_active_role(p_new_role hospital_role)
 RETURNS jsonb AS $$
