@@ -1,20 +1,23 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { Header } from "@/src/components/layout/Header";
-import { SimulatorDrawer } from "@/src/components/simulator/SimulatorDrawer";
+import { AuthProvider } from "@/src/context/AuthContext";
+import { PrintStyles } from "@/src/components/layout/PrintStyles";
 
 export const metadata: Metadata = {
-  title: "Hospital OPD System",
-  description: "Single Patient View Outpatient Department System",
+  title: "โรงพยาบาลมหาราชนครราชสีมา - ระบบผู้ป่วยนอก (OPD System)",
+  description: "ระบบบริหารจัดการผู้ป่วยนอก โรงพยาบาลมหาราชนครราชสีมา",
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
     <html lang="th">
-      <body className="min-h-screen flex flex-col">
-        <Header />
-        <main className="flex-1">{children}</main>
-        <SimulatorDrawer />
+      <body className="min-h-screen">
+        <PrintStyles />
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );

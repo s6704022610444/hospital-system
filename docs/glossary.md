@@ -1,38 +1,35 @@
-# Hospital System - Domain Glossary
+# Hospital Domain Glossary (Universal Standard Terms)
 
 | Term | Category | Description |
 |---|---|---|
-| **HN (Hospital Number)** | Patient Registry | รหัสประจำตัวผู้ป่วยถาวร 1 คนมี 1 เลขตลอดชีพ ใช้เป็น Anchor สำหรับ Single Patient View |
-| **VN (Visit Number)** | Clinical / OPD | รหัสประจำการเข้ารับบริการผู้ป่วยนอกในแต่ละครั้ง ผูกกับ 1 HN และมีวงรอบชีวิตตาม `visits.status` |
-| **Macro State (`visits.status`)** | State Machine | สถานะระดับการเดินทางของผู้ป่วย สะท้อนจุดประจำการทางกายภาพ (Physical Location Queue) ของคนไข้ในโรงพยาบาล |
-| **Micro State (`orders.status`)** | State Machine | สถานะวงรอบชีวิตของคำสั่งตรวจแต่ละรายการ (Lab, X-ray, Nuclear Imaging, I-131 therapy) |
-| **Doctor Review (`doctor_review`)** | Macro State | สถานะที่คนไข้ทำหัตถการ/ตรวจทางห้องปฏิบัติการครบทุกรายการแล้ว และถูกส่งกลับมาเข้าคิวพบแพทย์ซ้ำเพื่อฟังผลและวางแผนการรักษา |
-| **Pre-paid** | Financial Policy | นโยบายการชำระเงินที่ผู้ป่วยต้องชำระค่าตรวจ/หัตถการที่การเงินก่อน แผนกตรวจจึงจะรับตัวไปทำหัตถการได้ |
-| **Post-paid** | Financial Policy | นโยบายการชำระเงินที่อนุญาตให้เข้ารับการตรวจก่อน แล้วจึงสรุปยอดชำระร่วมกับค่ายาในตอนท้าย (เคสด่วน/นิวเคลียร์) |
-| **Single Patient View** | Architecture | การรวมศูนย์ข้อมูลประวัติการรักษา ผลตรวจ ยา และค่าใช้จ่ายของผู้ป่วยไว้ในจุดเดียว ผ่านการควบคุมความปลอดภัยและ Audit Log |
-| **Read Audit Log** | Security / Audit | การบันทึกหลักฐานทุกครั้งที่มีการเปิดดูประวัติผู้ป่วย (HN/VN) ผ่านฟังก์ชัน Supabase RPC `log_access` |
-| **Write Audit Log** | Security / Audit | การบันทึกประวัติการสร้าง แก้ไข หรือลบข้อมูล (INSERT/UPDATE/DELETE) โดยอัตโนมัติผ่าน Database Triggers |
-| **Active Role** | Authentication | บทบาทการทำงานปัจจุบันที่ผู้ใช้เลือกสวมสิทธิ์ใน Session นั้นๆ เพื่อความชัดเจนในการบันทึก Audit และจำกัดขอบเขต RLS |
-| **Custom Access Token Hook** | Architecture / Security | PostgreSQL Function ใน Supabase Auth ที่ทำหน้าที่ Inject claims (เช่น roles, active_role) เข้าสู่ JWT ตอนออก Token |
-| **Prescription** | Pharmacy | ใบสั่งยาและรายการยาที่แพทย์สั่ง แยกโครงสร้างออกจาก orders เพื่อรองรับการตรวจสอบการแพ้ยา (Drug Allergy) และการจัดจ่ายยา |
-| **Void / Refund** | Finance | กระบวนการยกเลิกใบเสร็จและคืนเงินที่ต้องกระทำโดยเจ้าหน้าที่การเงินเท่านั้น เพื่อรักษาความถูกต้องของยอดบัญชีเงินสด |
-| **Radioactive Decay** | Nuclear Medicine | การสลายตัวตามเวลาของสารเภสัชรังสี ซึ่งต้องคำนวณแบบ Real-time และบันทึก Snapshot ปริมาณรังสีจริง (Administered Dose) ลงฐานข้อมูล |
-| **Safety Checklist (Hard Stop)** | Clinical Safety | กฎความปลอดภัยทางรังสีขั้นเด็ดขาด (เช่น ผลตรวจการตั้งครรภ์เป็นลบ) ซึ่งหากไม่ผ่าน ระบบจะบล็อกการทำหัตถการในระดับ Database ทันที 100% |
-| **Clinical Override** | Clinical Governance | การที่แพทย์เฉพาะทางกดยืนยันข้ามคำเตือนความปลอดภัย (Soft Warning) โดยระบบบังคับให้กรอกเหตุผลทางคลินิกและบันทึกลง Audit Trail |
-| **Simulated External Integration** | Architecture | โมดูลจำลองการเชื่อมต่อภายนอก (QR Payment, Health ID, Telemedicine) ผ่าน Next.js Route Handlers (`/api/mock/*`) โดยไม่พึ่งพาระบบจริงภายนอก |
-| **High-Density Seed Data** | Testing / QA | ชุดข้อมูลคนไข้จำลอง 150–200 คนที่กระจายตัวตามสถานะคิวจริงและเคสทางคลินิกต่างๆ เพื่อทดสอบ Performance, Realtime และ Pagination |
-| **Append-Only Audit Log** | Security / Compliance | ตารางบันทึก Audit ที่รับข้อมูลเพิ่มได้เท่านั้น ห้ามแก้ไขหรือลบรายการ และกำหนดเก็บรักษาอย่างน้อย 10 ปี |
-| **Self-Auditing Export** | Security / Compliance | การบันทึก Audit Event `log_export_generated` ทุกครั้งที่ Export Log โดยระบุผู้ใช้ ช่วงเวลา และ Filter ที่ใช้ |
-| **Two-Phase Stock Deduction** | Inventory | กลไกการตัดสต็อกยา 2 จังหวะ: ทำการจอง (Reserve) ทันทีที่แพทย์สั่ง และตัดยอดจริง (Deduct) เมื่อยืนยันการชำระเงินเรียบร้อย |
-| **Single Unified Stock** | Inventory | สถาปัตยกรรมคลังสินค้าระดับรวมศูนย์จุดเดียว ที่ทุกแผนกตัดยอดจาก Master Stock ร่วมกันโดยไม่มี Sub-inventory ใน V1 |
-| **Negative Stock Hard Block** | Inventory / Safety | กฎเกณฑ์ระดับ Database ห้ามสต็อกติดลบเด็ดขาด หากยาไม่พอจะบล็อกการสั่งยาจนกว่าฝ่ายคลังจะบันทึกรับของเข้าสู่ระบบ |
-| **Consolidated Single Invoice** | Finance | ใบแจ้งหนี้และใบเสร็จรับเงินรวมศูนย์ฉบับเดียว ที่ดึงค่าใช้จ่ายค้างชำระของ Post-paid orders, ค่ายา, และค่าบริการทางการแพทย์มารวมกัน |
-| **Unpaid Debt (Walkout)** | Revenue / Finance | สถานะของ Visit และการเงินเมื่อคนไข้ตรวจรักษาเสร็จแล้วหนีกลับโดยไม่ชำระเงิน ระบบจะบันทึกยอดหนี้ค้างชำระติดตัว HN |
-| **Outstanding Balance Alert** | Risk Management | ป้ายเตือนสีแดงอัตโนมัติบนหน้าจอเวชระเบียนและพยาบาลคัดกรอง เมื่อคนไข้ที่มียอดหนี้ค้างชำระกลับมาเข้ารับบริการในครั้งถัดไป |
-| **Modular Widget Dashboard** | UI / Architecture | สถาปัตยกรรมหน้าจอ Single Patient View รวมศูนย์ (`/patient/[hn]`) ประกอบด้วยการ์ดแยกหน้าที่และปรับ Layout ตาม Active Role ของผู้ใช้ |
-| **Optimistic Concurrency Control (OCC)** | Data Integrity | กลไกควบคุมความถูกต้องของข้อมูลผ่านคอลัมน์ `version` และ `updated_at` ป้องกันการเขียนทับข้อมูลโดยไม่รู้ตัว (Dirty Overwrite) บังคับใช้กับทุกตารางยกเว้น Audit |
-| **Medical Technologist (`med_tech`)** | Roles & Permissions | บทบาทนักเทคนิคการแพทย์ ทำหน้าที่รับคำสั่งตรวจแล็บ บันทึกผลแล็บ และรายงานผล โดยถูกจำกัดสิทธิ์ไม่ให้เข้าถึงข้อมูลคลินิกส่วนอื่น |
-| **Drug Allergy Alert** | Clinical Safety | การตรวจสอบประวัติแพ้ยาอัตโนมัติก่อนสั่งยา หากเป็นกลุ่มแพ้รุนแรงจะบังคับให้แพทย์ระบุ Clinical Justification เพื่อ Override |
-| **Duplicate HN Prevention** | Patient Registry | การป้องกันสร้างเวชระเบียนซ้ำด้วย Unique National ID (CID) 13 หลัก หากพบข้อมูลเดิมจะเปิด Visit ใหม่ทันทีโดยไม่สร้าง HN ซ้ำ |
-| **Phantom Stock Auto-Release** | Inventory | กลไกปลดล็อกจำนวนยาที่ถูกจอง (Reserved Stock) คืนสู่คลังอัตโนมัติเมื่อใบสั่งยาค้างชำระเกิน 24 ชั่วโมง |
-| **SWR Polling Fallback** | Architecture / Resilience | ระบบสำรองข้อมูลคิวอัตโนมัติเมื่อ WebSocket Realtime หลุด โดยสลับไป Polling ผ่าน HTTP ทุก 15 วินาทีจนกว่าจะ Reconnect สำเร็จ |
+| **HN (Hospital Number)** | Patient Registry | รหัสประจำตัวผู้ป่วยถาวรของโรงพยาบาล (1 คนมี 1 เลขตลอดชีพ) ใช้เชื่อมโยงประวัติการรักษาทั้งหมด |
+| **VN (Visit Number)** | Clinical / OPD | รหัสการเข้ารับบริการผู้ป่วยนอกประจำวัน (มา 1 ครั้งได้ 1 เลข) ใช้อ้างอิงคิวและค่าใช้จ่ายของวันนั้น |
+| **OPD (Outpatient Department)** | Healthcare | แผนกผู้ป่วยนอก ให้บริการตรวจรักษาแบบไป-กลับ ไม่ต้องนอนพักค้างคืนในโรงพยาบาล |
+| **Triage** | Nursing | กระบวนการคัดกรอง จัดลำดับความเร่งด่วนในการตรวจรักษา และประเมินความเสี่ยงเบื้องต้นของผู้ป่วย |
+| **Vital Signs (สัญญาณชีพ)** | Nursing / Clinical | ค่าชี้วัดการทำงานของร่างกาย ได้แก่ ความดันโลหิต (BP), ชีพจร (PR), อัตราการหายใจ (RR), อุณหภูมิ (Temp) |
+| **Chief Complaint (CC)** | Clinical | อาการสำคัญหรือเหตุผลหลักที่ทำให้ผู้ป่วยเดินทางมาโรงพยาบาลในครั้งนั้น |
+| **ICD-10** | Clinical Coding | ระบบการจัดประเภทโรคและปัญหาสุขภาพสากลตามมาตรฐานองค์การอนามัยโลก (WHO) |
+| **Prescription (Rx)** | Pharmacy | ใบสั่งยาและรายการยาที่แพทย์สั่งจ่ายให้ผู้ป่วยเพื่อนำไปรับที่ห้องจ่ายยา |
+| **Allergy (ประวัติแพ้ยา/อาหาร)** | Patient Safety | บันทึกประวัติอาการไม่พึงประสงค์จากการใช้ยาหรือสารเคมี เพื่อป้องกันการเกิดอันตรายซ้ำ |
+| **Walk-in Patient** | Patient Inflow | ผู้ป่วยที่เดินทางมารับบริการโดยไม่มีการนัดหมายล่วงหน้า เวชระเบียนบันทึกอาการสำคัญและเลือกคลินิกปลายทางก่อนเปิด Visit |
+| **Appointment-based Visit** | Patient Inflow | การเข้ารับบริการตามนัดหมายที่บันทึกไว้ล่วงหน้า ระบบใช้ข้อมูลนัด เช่น วันเวลา คลินิก และแพทย์ เพื่อช่วยเปิด Visit |
+| **Referral (ใบส่งตัว)** | Patient Inflow / Finance | การส่งต่อผู้ป่วยจากสถานพยาบาลต้นทาง โดย Visit ควรบันทึกชื่อโรงพยาบาลต้นทางและเลขที่หนังสือส่งตัวเพื่อการติดตามและตรวจสอบสิทธิ์ |
+| **Affiliated Hospital (สถานพยาบาลตามสิทธิ)** | Insurance / Claims | โรงพยาบาลต้นสังกัดหรือสถานพยาบาลหลักที่ผู้ป่วยมีสิทธิการรักษาขึ้นทะเบียนอยู่ ใช้สำหรับการส่งเบิกเงินชดเชยค่ารักษา |
+| **Hybrid Visit Routing** | Patient Routing | การกระจายคิวตรวจ: กรณีผู้ป่วยนัดหมายจะส่งตรงถึงแพทย์และห้องตรวจเฉพาะเจาะจง ส่วนกรณี Walk-in จะส่งเข้าคลินิกกลาง |
+| **Deferred Referral Document** | Patient Inflow / Policy | นโยบายอนุญาตให้เปิด Visit และรับการรักษาได้ทันทีก่อนที่เอกสารส่งตัวฉบับจริงจะมาถึง โดยติดสถานะ `pending_document` เพื่อติดตามย้อนหลัง |
+| **Identification Types** | Patient Registry | ประเภทเอกสารระบุตัวตนผู้ป่วย: บัตร ปชช. ไทย (`thai_cid`), หนังสือเดินทาง (`passport`), หรือรหัสฉุกเฉินชั่วคราว (`anonymous_trauma`) |
+| **HN Storage vs Display** | Data Contract | รูปแบบรหัสผู้ป่วยตลอดชีพ: จัดเก็บใน DB เป็น `HN-YY-XXXXXXX` และแสดงผลบน UI ย่อเป็น `HN-XXXXXXX` |
+| **VN Daily Midnight Reset** | Data Contract | รูปแบบรหัส Visit ประจำวัน: จัดเก็บเป็น `VN-DDMMYYYY-XXXXXXX` และแสดงผลบน UI ย่อเป็น `VN-XXXXXXX` โดยลำดับรีเซ็ตนับ 1 ใหม่ทุกเที่ยงคืน |
+| **OPD Routing Slip** | Patient Documents | ใบนำทางผู้ป่วยหรือบัตรคิว OPD ที่พิมพ์ออกมาหลังเปิด Visit เพื่อบอกคลินิกปลายทาง คิวตรวจ วันเวลา และคำแนะนำการรับบริการ |
+| **Barcode Labels** | Specimen & Identification | สติกเกอร์บาร์โค้ดขนาดเล็กที่พิมพ์หลังเปิด Visit เพื่อติดหลอดเลือดหรือเอกสารส่งตรวจ โดยผูกกับ HN และ Visit เดียวกัน |
+| **Legal Identity Amendment** | Patient Governance | การแก้ไขข้อมูลระบุตัวตนสำคัญทางกฎหมาย (ชื่อ-สกุล, เลขบัตร, วันเกิด) ที่บังคับให้ระบุเหตุผลการแก้ไขเสมอและบันทึกประวัติย้อนหลัง |
+| **Inactive Duplicate HN** | Patient Master Index | นโยบายจัดการ HN ซ้ำซ้อนใน V1 โดยการปิดการใช้งาน (Mark Inactive) พร้อมบันทึกเลขอ้างอิง primary HN แทนการ merge ข้อมูลอัตโนมัติ |
+| **Clinic-Specific Triage Queue** | Nursing Workstation | คิวรอคัดกรองสัญญาณชีพที่กรองแสดงผลเฉพาะคนไข้ที่ส่งตรวจมายังคลินิกเป้าหมาย ไม่ปะปนกับคลินิกอื่น (ADR 0006) |
+| **Nurse Workstation Selector** | Duty Management | ตัวเลือกคลินิกประจำการที่หัวหน้าจอพยาบาล เพื่อรองรับการหมุนเวียนเวรและช่วยงานข้ามคลินิกโดยไม่ต้องแก้สิทธิ์ระบบ (ADR 0006) |
+| **Single Patient View (EMR Canvas)** | Clinical Workstation | ศูนย์รวมข้อมูลผู้ป่วยทุกมิติในหน้าจอเดียว (ทะเบียนประวัติ, สัญญาณชีพ, แผนพยาบาล, กราฟ, แล็บ, คำสั่งแพทย์) โดยไม่ต้องเปิดสลับโปรแกรม (ADR 0007) |
+| **Electronic OPD Card** | Clinical Documentation | บัตรตรวจโรคผู้ป่วยนอกอิเล็กทรอนิกส์เสมือนแผ่นกระดาษแผ่นเดียว ที่รองรับการคลิกพิมพ์แก้ไขค่าตรวจวัด เพิ่ม หรือลบข้อมูลได้โดยตรง (ADR 0007) |
+| **Persistent Patient Banner** | Clinical Safety | แถบสรุปข้อมูลผู้ป่วยด้านบนสุดที่ตรึงถาวร แสดงชื่อ, HN, VN, ป้ายเตือนแพ้ยาสีแดง (Allergy), และสรุปสัญญาณชีพล่าสุดตลอดเวลา (ADR 0007) |
+| **Dynamic Clinical Parameters** | Nursing Assessment | ค่าตรวจวัดเฉพาะทางที่สามารถคลิกเลือกเพิ่มหรือลบออกจากแผ่นชาร์ตได้อิสระ เช่น DTX, เส้นรอบเอว, คัดกรองการตั้งครรภ์, GCS Score (ADR 0007) |
+| **Hybrid Exam Queue** | Patient Dispatch | ระบบคิวห้องตรวจแพทย์ที่รองรับทั้งการส่งเข้าคิวกลางของคลินิก (Pooled Queue) และการระบุเจาะจงห้องตรวจแพทย์เฉพาะราย (ADR 0008) |
+| **Automated Triage Fast-Track** | Clinical Safety | ระบบตรวจจับค่าสัญญาณชีพวิกฤต (BP วิกฤต, ไข้สูง, ออกซิเจนต่ำ) และยกระดับแทรกคิวขึ้นอันดับแรกของห้องตรวจอัตโนมัติ (ADR 0008) |
+| **Hypertensive Crisis Alert** | Patient Safety | การตรวจพบความดันโลหิตสูงวิกฤต SBP ≥ 180 หรือ DBP ≥ 110 mmHg ที่ต้องขึ้นแถบสีแดงกระพริบเตือนและพบแพทย์ทันที (ADR 0008) |

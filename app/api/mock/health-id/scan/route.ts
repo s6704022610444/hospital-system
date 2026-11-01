@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 
-// Mock data pools for realistic Smart Card simulation
-const mockThaiCitizens = [
+// Mock citizen data pool matching Maharat Nakhon Ratchasima Hospital demographics
+const mockCitizens = [
   {
-    nationalId: "1103700543219",
+    nationalId: "1103700543210",
     firstName: "สมศักดิ์",
     lastName: "รักสงบ",
     gender: "M",
@@ -11,7 +11,7 @@ const mockThaiCitizens = [
     bloodGroup: "O",
     insuranceScheme: "Universal Coverage",
     phone: "081-234-5678",
-    address: "99/12 หมู่ 4 ต.บางเขน อ.เมือง จ.นนทบุรี 11000",
+    address: "99/12 หมู่ 4 ต.ในเมือง อ.เมือง จ.นครราชสีมา 30000",
   },
   {
     nationalId: "3101400876541",
@@ -22,25 +22,24 @@ const mockThaiCitizens = [
     bloodGroup: "B",
     insuranceScheme: "Social Security",
     phone: "089-876-5432",
-    address: "123 ถ.สุขุมวิท แขวงคลองเตย เขตคลองเตย กทม. 10110",
+    address: "123 ถ.มิตรภาพ ต.ปากช่อง อ.ปากช่อง จ.นครราชสีมา 30130",
   },
   {
-    nationalId: "5100200112233",
-    firstName: "ประสิทธิ์",
-    lastName: "วงศ์สว่าง",
-    gender: "M",
-    birthDate: "1960-11-03",
+    nationalId: "1309900887766",
+    firstName: "กานดา",
+    lastName: "ชัยมงคล",
+    gender: "F",
+    birthDate: "1998-12-05",
     bloodGroup: "A",
-    insuranceScheme: "Civil Servant",
-    phone: "084-555-9988",
-    address: "45/2 ถ.พหลโยธิน ต.คลองหนึ่ง อ.คลองหลวง จ.ปทุมธานี 12120",
+    insuranceScheme: "Universal Coverage",
+    phone: "082-999-1122",
+    address: "55/1 ต.สีคิ้ว อ.สีคิ้ว จ.นครราชสีมา 30140",
   },
 ];
 
 export async function GET() {
-  // Randomly select one citizen to simulate realistic card insertion
-  const randomIndex = Math.floor(Math.random() * mockThaiCitizens.length);
-  const selected = mockThaiCitizens[randomIndex];
+  const randomIndex = Math.floor(Math.random() * mockCitizens.length);
+  const selected = mockCitizens[randomIndex];
 
   return NextResponse.json({
     status: "success",
